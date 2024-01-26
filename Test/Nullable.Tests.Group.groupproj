@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{90343B5F-70E1-4F15-9832-B1E30BEE04D9}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="Nullable.Test.Prj.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="..\Tests\Nullable.Tests.Prj.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="Nullable_Test_Prj">
+        <MSBuild Projects="Nullable.Test.Prj.dproj"/>
+    </Target>
+    <Target Name="Nullable_Test_Prj:Clean">
+        <MSBuild Projects="Nullable.Test.Prj.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Nullable_Test_Prj:Make">
+        <MSBuild Projects="Nullable.Test.Prj.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Nullable_Tests_Prj">
+        <MSBuild Projects="..\Tests\Nullable.Tests.Prj.dproj"/>
+    </Target>
+    <Target Name="Nullable_Tests_Prj:Clean">
+        <MSBuild Projects="..\Tests\Nullable.Tests.Prj.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Nullable_Tests_Prj:Make">
+        <MSBuild Projects="..\Tests\Nullable.Tests.Prj.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="Nullable_Test_Prj;Nullable_Tests_Prj"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="Nullable_Test_Prj:Clean;Nullable_Tests_Prj:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="Nullable_Test_Prj:Make;Nullable_Tests_Prj:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
