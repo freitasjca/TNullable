@@ -104,11 +104,12 @@ Synopse post [ORM TNullable* fields for NULL storage][6]
 Spring4D [Nullable implementation][4].   
 Landgraf.dev [Nullable implementation][7].   
 
-[0]: https://blog.therealoracleatdelphi.com/2008/09/a-post_18.html "A "Nullable" Post"
-[1]: https://dalijap.blogspot.com/2020/05/delphi-nullable-with-custom-managed.html "Delphi Nullable with Custom Managed Records"
-[2]: https://blog.marcocantu.com/blog/2020-may-custom-managed-records.html "Custom Managed Records Coming to Delphi 10.4"
-[3]: http://blog.barrkel.com/2008/09/smart-pointers-in-delphi.html "Smart pointers in Delphi"  
-[4]: https://bitbucket.org/sglienke/spring4d/src/master/  "Main Repository"
-[5]: https://github.com/spring4d/spring4d "GitHub"
-[6]: https://blog.synopse.info/?post/2015/09/25/ORM-TNullable%2A-fields-for-NULL-storage  "ORM TNullable* fields for NULL storage"
-[7]: https://github.com/landgraf-dev/aws-sdk-delphi/blob/master/Source/Core/AWS.Nullable.pas ""
+
+[0]: https://blog.therealoracleatdelphi.com/2008/09/a-post_18.html   
+[1]: https://dalijap.blogspot.com/2020/05/delphi-nullable-with-custom-managed.html
+[2]: https://blog.marcocantu.com/blog/2020-may-custom-managed-records.html
+[3]: http://blog.barrkel.com/2008/09/smart-pointers-in-delphi.html
+[4]: https://bitbucket.org/sglienke/spring4d/src/master/
+[5]: https://github.com/spring4d/spring4d
+[6]: https://blog.synopse.info/?post/2015/09/25/ORM-TNullable%2A-fields-for-NULL-storage
+[7]: https://github.com/landgraf-dev/aws-sdk-delphi/blob/master/Source/Core/AWS.Nullable.pas
