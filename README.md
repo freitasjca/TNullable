@@ -103,7 +103,9 @@ Barry Kelly post [Smart pointers in Delphi][3]
 Synopse post [ORM TNullable* fields for NULL storage][6]  
 Spring4D [Nullable implementation][4].   
 Landgraf.dev [Nullable implementation][7].   
-Paulo Rossi [Neon - JSON Serialization Library for Delphi][8]
+Paulo Rossi [Neon - JSON Serialization Library for Delphi][8] and it's usage with [JSON Serializer][9]
+
+
 
 [0]: https://blog.therealoracleatdelphi.com/2008/09/a-post_18.html   
 [1]: https://dalijap.blogspot.com/2020/05/delphi-nullable-with-custom-managed.html
@@ -114,3 +116,4 @@ Paulo Rossi [Neon - JSON Serialization Library for Delphi][8]
 [6]: https://blog.synopse.info/?post/2015/09/25/ORM-TNullable%2A-fields-for-NULL-storage
 [7]: https://github.com/landgraf-dev/aws-sdk-delphi/blob/master/Source/Core/AWS.Nullable.pas
 [8]: https://github.com/paolo-rossi/delphi-neon/blob/master/Source/Neon.Core.Nullables.pas
+[9]: https://github.com/paolo-rossi/delphi-neon/blob/master/Source/Neon.Core.Persistence.JSON.pas  

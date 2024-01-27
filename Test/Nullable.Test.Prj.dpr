@@ -6,6 +6,7 @@ program Nullable.Test.Prj;
 
 uses
   System.SysUtils,
+  System.SyncObjs,
   Nullable.WithIssue in '..\src\records\Nullable.WithIssue.pas',
   Nullable in '..\src\records\Nullable.pas',
   Logger.Console in '..\src\Log\Logger.Console.pas',
@@ -27,7 +28,7 @@ type
 var
   //lNullInt1,
   //lNullInt2: Nullable.WithIssue.Nullable<Integer>;
-
+  FManualClockCorrectionLock: TLightweightMREW;
 
   lNullInt1,
   lNullInt2: TNullable<Integer>;

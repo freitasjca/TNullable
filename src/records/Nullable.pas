@@ -1,46 +1,5 @@
 unit Nullable;
 
-{
-Nullables are a rather simple concept.
-All you need is a value, and some flag that will tell you whether or
-not the value has been explicitly set or not.
-
-
-ISSUE: Records are not automatically initialized and that your FHasValue boolean
-       can hold a random value.
-
-       Declaring a variable of type Nullable<T> where T is some concrete type,
-       would leave the resulting structure uninitialized.
-
-       Delphi, managed types (like strings, interfaces, Dynamic Arrays) when put
-       in record will be automatically initialized even when such a record is
-       declared as local variable.
-
-       "managed types" typically refers to types that are automatically managed
-       by the Delphi runtime system in terms of memory allocation and deallocation.
-
-       Delphi managed types:
-         - Strings
-         - Dynamic Arrays
-         - Interface
-         - Dynamic Records ( starting with Delphi 2009 if contain managed type fields)
-
-       Delphi unmanaged types:
-         - Static Arrays
-         - Ordinary Records
-         - Enumerations
-         - Sets
-         - Integers
-         - Booleans
-
-SOLUTION: Custom Managed Record ( only after Delphi 10.4)
-
-
-https://blogs.embarcadero.com/a-nullable-post/
-https://dalijap.blogspot.com/2020/05/delphi-nullable-with-custom-managed.html
-}
-
-
 
 interface
 
@@ -58,13 +17,15 @@ type
   TValue = System.Rtti.TValue;
   PValue = ^TValue;
 
+  TNullRecord = record
+  end;
+  
 
   TNullable<T> = record
   private
    {$IF (CompilerVersion >= 34)} // RAD Studio 10.4 Sydney
-    FHasValue: boolean;
+    FHasValue: boolean;      //Boolean is unmanaged type and can hold a random value
    {$ELSE}
-    //FHasValue: Boolean;    //Boolean is unmanaged type and can hold a random value
     FHasValue: IInterface;   //To avoid not being inicialized.
    {$ENDIF}
     FValue: T;
@@ -73,13 +34,12 @@ type
     procedure SetValue(AValue: T);
     function GetValueOrDefault: T;
     function GetIsNull: Boolean;
-    //class function GetEmpty: Nullable<T>; static;
-    function GetEmpty: TNullable<T>;
+    class function GetEmpty: TNullable<T>; static;
 
     class procedure CheckNullOperation(Left, Right: TNullable<T>); static;
-    
   public
-    constructor Create(AValue: T);
+    constructor Create(const Value: T); overload;
+    constructor Create(const Value: Variant); overload;
     {$IF (CompilerVersion >= 34)} // From RAD Studio 10.4 Sydney
     class operator Initialize(out Dest: TNullable<T>);
     class operator Finalize(var Dest: TNullable<T>);
@@ -94,21 +54,26 @@ type
     property IsNull: Boolean read GetIsNull;
     property ValueOrDefault: T read GetValueOrDefault;
 
-    //class property Empty: Nullable<T> read GetEmpty;
-    property Empty: TNullable<T> read GetEmpty;
-
-    class operator NotEqual(const ALeft, ARight: TNullable<T>): Boolean;
-    class operator Equal(ALeft, ARight: TNullable<T>): Boolean;
+    class property Empty: TNullable<T> read GetEmpty;
 
     {$IF (CompilerVersion >= 34)} // From RAD Studio 10.4 Sydney
-    class operator Implicit(Value: TNullable<T>): T;
-    class operator Implicit(Value: T): TNullable<T>;
-    class operator Explicit(Value: TNullable<T>): T;
+    class operator Implicit(const Value: TNullable<T>): T;
+    class operator Implicit(const Value: TNullable<T>): Variant;
+    class operator Implicit(const Value: Pointer): TNullable<T>;
+    class operator Implicit(const Value: T): TNullable<T>;
+    class operator Implicit(const Value: Variant): TNullable<T>;
+    class operator Implicit(const Value: TNullRecord): TNullable<T>;
 
-    class operator GreaterThan(Left, Right: TNullable<T>): Boolean;
-    class operator GreaterThanOrEqual(Left, Right: TNullable<T>): Boolean;
-    class operator LessThan(Left, Right: TNullable<T>): Boolean;
-    class operator LessThanOrEqual(Left, Right: TNullable<T>): Boolean;
+    class operator Explicit(const Value: TNullable<T>): T;
+
+    class operator Equal(const Left, Right: TNullable<T>): Boolean;
+    class operator NotEqual(const Left, Right: TNullable<T>): Boolean;
+
+    class operator GreaterThan(const Left, Right: TNullable<T>): Boolean;
+    class operator GreaterThanOrEqual(const Left, Right: TNullable<T>): Boolean;
+
+    class operator LessThan(const Left, Right: TNullable<T>): Boolean;
+    class operator LessThanOrEqual(const Left, Right: TNullable<T>): Boolean;
     {$ENDIF}
   end;
 
@@ -116,24 +81,42 @@ type
   public
     constructor Create;
   end;
+
   ENullConvertException = class(Exception)
   public
     constructor Create(ATypeInfo: PTypeInfo);
   end;
 
+  NullString = TNullable<string>;
+  NullBoolean = TNullable<Boolean>;
+  NullInteger = TNullable<Integer>;
+  NullInt64 = TNullable<Int64>;
+  NullDouble = TNullable<Double>;
+  NullDateTime = TNullable<TDateTime>;
+  NullDate = TNullable<TDate>;
+  NullTime = TNullable<TTime>;
+  NullCurrency = TNullable<Currency>;
+  NullGuid = TNullable<TGUID>;
+{$IFNDEF NEXTGEN}
+  NullWideString = TNullable<WideString>;
+  {$ENDIF}
+  
 
 {$IF (CompilerVersion < 34)} // Previous to RAD Studio 10.4 Sydney
 procedure SetFlagInterface(var Intf: IInterface);
 {$ENDIF}
 
-
+var
+  SNull: TNullRecord;
 
 implementation
 
+{$IFDEF LOG}
 uses
   Logger.Intf;
+{$ENDIF}
 
-
+{$REGION 'Previous to RAD Studio 10.4 Sydney'}
 {$IF (CompilerVersion < 34)} // Previous to RAD Studio 10.4 Sydney
 function NopAddref(inst: Pointer): Integer; stdcall;
 begin
@@ -165,6 +148,8 @@ begin
   Intf := IInterface(@FlagInterfaceInstance);
 end;
 {$ENDIF}
+{$ENDREGION}
+
 
 { ENullValueException }
 
@@ -185,17 +170,9 @@ begin
     raise ENullValueException.Create;
 end;
 
-{
-class function Nullable<T>.GetEmpty: Nullable<T>;
+class function TNullable<T>.GetEmpty: TNullable<T>;
 begin
   Result.Clear;
-end;
-}
-
-function TNullable<T>.GetEmpty: TNullable<T>;
-begin
-  Result := Self;
-  Clear;
 end;
 
 function TNullable<T>.GetIsNull: Boolean;
@@ -219,17 +196,19 @@ begin
     Result := Default(T);
 end;
 
-class operator TNullable<T>.GreaterThan(Left, Right: TNullable<T>): Boolean;
+{$IF (CompilerVersion >= 34)} // From RAD Studio 10.4 Sydney
+class operator TNullable<T>.GreaterThan(const Left, Right: TNullable<T>): Boolean;
 begin
   CheckNullOperation(Left, Right);
   Result := TComparer<T>.Default.Compare(Left, Right) > 0;
 end;
 
-class operator TNullable<T>.GreaterThanOrEqual(Left, Right: TNullable<T>): Boolean;
+class operator TNullable<T>.GreaterThanOrEqual(const Left, Right: TNullable<T>): Boolean;
 begin
   CheckNullOperation(Left, Right);
   Result := TComparer<T>.Default.Compare(Left, Right) >= 0;
 end;
+{$ENDIF}
 
 procedure TNullable<T>.SetValue(AValue: T);
 begin
@@ -281,17 +260,24 @@ class operator TNullable<T>.Initialize(out Dest: TNullable<T>);
 begin
   Dest.FHasValue := False;
 
+
+  {$IFDEF LOG}
   Log( Format('Initialize %s %s', [ GetTypeName(TypeInfo(TNullable<T>)),
                                     IntToHex (Integer(Pointer(@Dest)))]
              ) );
+  {$ENDIF}
+
 end;
 
 class operator TNullable<T>.Finalize(var Dest: TNullable<T>);
 begin
+  {$IFDEF LOG}
   Log( Format('destroyed %s %s', [ GetTypeName(TypeInfo(TNullable<T>)),
                                    IntToHex (Integer(Pointer(@Dest)))]
              ) );
+  {$ENDIF}
 end;
+
 {$ENDIF}
 
 
@@ -300,77 +286,122 @@ begin
   FHasValue := False;
   FValue := Default(T);
 
+  {$IFDEF LOG}
   Log( Format('clear %s %s', [ GetTypeName(TypeInfo(TNullable<T>)),
                                IntToHex (Integer(Pointer(@Self)))]
              ) );
+  {$ENDIF}
 end;
 
-constructor TNullable<T>.Create(AValue: T);
+constructor TNullable<T>.Create(const Value: Variant);
 begin
-  {$IF (CompilerVersion >= 34)} // Previous to RAD Studio 10.4 Sydney
-  FHasValue := True;
-  FValue := AValue;
-  {$ELSE}
-  FValue := AValue;
-  SetFlagInterface(FHasValue);
-  {$ENDIF}
+  if not VarIsNull(Value) and not VarIsEmpty(Value) then
+    Create(TValue.FromVariant(Value).AsType<T>)
+  else
+    Clear;
 
+  {$IFDEF LOG}
   Log( Format('create %s %s', [ GetTypeName(TypeInfo(TNullable<T>)),
                                IntToHex (Integer(Pointer(@Self)))]
              ) );
+  {$ENDIF}
 end;
 
-class operator TNullable<T>.Equal(ALeft, ARight: TNullable<T>): Boolean;
-var
-  Comparer: IEqualityComparer<T>;
+constructor TNullable<T>.Create(const Value: T);
 begin
-  if ALeft.HasValue and ARight.HasValue then
-  begin
-    Comparer := TEqualityComparer<T>.Default;
-    Result := Comparer.Equals(ALeft.Value, ARight.Value);
-  end else
-    Result := ALeft.HasValue = ARight.HasValue;
+  {$IF (CompilerVersion >= 34)} // Previous to RAD Studio 10.4 Sydney
+  FValue := Value;
+  FHasValue := True;
+  {$ELSE}
+  FValue := Value;
+  SetFlagInterface(FHasValue);
+  {$ENDIF}
+
+  {$IFDEF LOG}
+  Log( Form at('create %s %s', [ GetTypeName(TypeInfo(TNullable<T>)),
+                               IntToHex (Integer(Pointer(@Self)))]
+             ) );
+  {$ENDIF}
 end;
 
 {$IF (CompilerVersion >= 34)} // From RAD Studio 10.4 Sydney
-class operator TNullable<T>.Explicit(Value: TNullable<T>): T;
+class operator TNullable<T>.Explicit(const Value: TNullable<T>): T;
 begin
   Result := Value.Value;
 end;
 
-
-class operator TNullable<T>.Implicit(Value: TNullable<T>): T;
+class operator TNullable<T>.Implicit(const Value: TNullable<T>): T;
 begin
   Result := Value.Value;
+  end;
+
+class operator TNullable<T>.Implicit(const Value: TNullable<T>): Variant;
+begin
+  if Value.HasValue then
+  Result := TValue.From<T>(Value.Value).AsVariant
+  else
+  Result := Null;
 end;
 
-class operator TNullable<T>.Implicit(Value: T): TNullable<T>;
+class operator TNullable<T>.Implicit(const Value: T): TNullable<T>;
 begin
   Result := TNullable<T>.Create(Value);
 end;
 
-class operator TNullable<T>.LessThanOrEqual(Left, Right: TNullable<T>): Boolean;
+class operator TNullable<T>.Implicit(const Value: Pointer): TNullable<T>;
+begin
+  if Value = nil then
+    Result.Clear
+  else
+    Result := TNullable<T>.Create(T(Value^));
+end;
+
+class operator TNullable<T>.Implicit(const Value: Variant): TNullable<T>;
+begin
+  Result := TNullable<T>.Create(Value);
+end;
+
+class operator TNullable<T>.Implicit(const Value: TNullRecord): TNullable<T>;
+begin
+  Result.FHasValue := False;
+end;
+
+
+class operator TNullable<T>.LessThanOrEqual(const Left, Right: TNullable<T>): Boolean;
 begin
   CheckNullOperation(Left, Right);
   Result := TComparer<T>.Default.Compare(Left, Right) <= 0;
 end;
 
-class operator TNullable<T>.LessThan(Left, Right: TNullable<T>): Boolean;
+class operator TNullable<T>.LessThan(const Left, Right: TNullable<T>): Boolean;
 begin
   CheckNullOperation(Left, Right);
   Result := TComparer<T>.Default.Compare(Left, Right) < 0;
 end;
 
-class operator TNullable<T>.NotEqual(const ALeft, ARight: TNullable<T>): Boolean;
+class operator TNullable<T>.Equal(const Left, Right: TNullable<T>): Boolean;
 var
   Comparer: IEqualityComparer<T>;
 begin
-  if ALeft.HasValue and ARight.HasValue then
+  if Left.HasValue and Right.HasValue then
   begin
     Comparer := TEqualityComparer<T>.Default;
-    Result := not Comparer.Equals(ALeft.Value, ARight.Value);
+    Result := Comparer.Equals(Left.Value, Right.Value);
   end else
-    Result := ALeft.HasValue <> ARight.HasValue;
+    Result := Left.HasValue = Right.HasValue;
+end;
+
+
+class operator TNullable<T>.NotEqual(const Left, Right: TNullable<T>): Boolean;
+var
+  Comparer: IEqualityComparer<T>;
+begin
+  if Left.HasValue and Right.HasValue then
+  begin
+    Comparer := TEqualityComparer<T>.Default;
+    Result := not Comparer.Equals(Left.Value, Right.Value);
+  end else
+    Result := Left.HasValue <> Right.HasValue;
 end;
 {$ENDIF}
 
